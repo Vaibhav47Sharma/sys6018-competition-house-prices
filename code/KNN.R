@@ -1,7 +1,8 @@
 # KNN Implementation
 
-dist <- function(x) {
-  # Calculate distance
+dist.euclidean.vector <- function(x, y) {
+  # Calculates the euclidean distance between two vectors
+  return (sqrt(sum((x - y) ^ 2)))
 }
 
 
