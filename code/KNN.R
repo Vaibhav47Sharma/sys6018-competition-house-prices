@@ -43,26 +43,26 @@ Dist.chi.vector <- function(x, y) {
 
 DistKNN <- function(x, y, dm = "euclid") {
   if (dm == "euclid") {
-    return(dist.euclidean.vector(x, y))
-  #} else if (dm == "chisq") {
-  #  return(dist.chisq.vector(x, y))
+    return(Dist.euclidean.vector(x, y))
+  } else if (dm == "chisq") {
+    return(Dist.chi.vector(x, y))
   } else {
     stop("Distance metric name not recognized")
   }
 }
 
-FindKNearestNeighbors <- function(x, y, train, k, dm = "euclid", distweight = F) {
+FindKNearestNeighbors <- function(x, ycol, train, k, distweight = F, ...) {
   # x is the test vector of length ncol(train)
-  # y is a vector of response values of same length as nrow(train)
+  # ycol is a vector of response values of same length as nrow(train)
   # train is the full matrix of training data
   # k is the number of nearest neighbors
   # dm is the name of the distance method
  
   assert_that(is.matrix(train))
   assert_that(is.numeric(x))
-  assert_that(is.numeric(y))
+  assert_that(is.numeric(ycol))
   assert_that(is.integer(k))
-  assert_that(length(y) == nrow(train))
+  assert_that(length(ycol) == nrow(train))
   assert_that(length(x) == ncol(train))
   assert_that(k >= 1 & k < nrow(train))
 
@@ -72,7 +72,7 @@ FindKNearestNeighbors <- function(x, y, train, k, dm = "euclid", distweight = F)
   # Find distance of each neighbor
   for (i in 1:nrow(train)) {
     distances[i] <- DistKNN(x, as.numeric(train[i,]))
-    response.values[i] <- y[i]
+    response.values[i] <- ycol[i]
   }
   
   # Get top k neighbors
@@ -96,4 +96,26 @@ FindKNearestNeighbors <- function(x, y, train, k, dm = "euclid", distweight = F)
     outp <- sum(top.k.resp*(1/top.k.dist))/sum((1/top.k.dist))
   }
   return(outp)
+}
+
+KNN.Predict <- function(test, ycol, train, k, ...) {
+  # test is the matrix of predictors to be used for prediction
+  # ycol is a vector of response values of same length as nrow(train)
+  # train is the matrix of training data predictors
+  # k is the number of nearest neighbors
+  
+  assert_that(is.matrix(train))
+  assert_that(is.matrix(test))
+  assert_that(is.numeric(ycol))
+  assert_that(is.integer(k))
+  assert_that(length(ycol) == nrow(train))
+  assert_that(ncol(test) == ncol(train))
+  assert_that(k >= 1 & k < nrow(train))
+  
+  predictions <- numeric(nrow(test))
+  for (i in 1:nrow(test)) {
+    x <- as.numeric(test[i,])
+    predictions[i] <- FindKNearestNeighbors(x, ycol, train, k, ...)
+  }
+  return(predictions)
 }
