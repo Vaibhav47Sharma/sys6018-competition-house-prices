@@ -2,7 +2,7 @@
 
 library(assertthat)
 
-dist.euclidean.vector <- function(x, y) {
+Dist.euclidean.vector <- function(x, y) {
   # Calculates the euclidean distance between two vectors
   assertthat::assert_that(is.numeric(x))
   assertthat::assert_that(is.numeric(y))
@@ -13,7 +13,7 @@ dist.euclidean.vector <- function(x, y) {
   return (sqrt(sum((x - y) ^ 2)))
 }
 
-dist.hamming.vector <- function(x, y) {
+Dist.hamming.vector <- function(x, y) {
   # Calculates the hamming distance between two vectors
   assertthat::assert_that(is.numeric(x))
   assertthat::assert_that(is.numeric(y))
@@ -23,6 +23,22 @@ dist.hamming.vector <- function(x, y) {
   assertthat::assert_that(sum(is.na(y)) == 0)
   difference <- x - y
   return (length(difference[difference != 0]))
+}
+
+Dist.chi.vector <- function(x, y) {
+  # Calculates the chi squared distance between two vectors
+  assertthat::assert_that(is.numeric(x))
+  assertthat::assert_that(is.numeric(y))
+  assertthat::assert_that(length(x)==length(y))
+  assertthat::assert_that(length(x)>0)
+  assertthat::assert_that(sum(is.na(x)) == 0)
+  assertthat::assert_that(sum(is.na(y)) == 0)
+  
+  sum.vector <- x + y
+  euclid.distance.vector <- (x - y) ^ 2
+  sum.vector <- ifelse(sum.vector != 0, euclid.distance.vector / sum.vector, 0)
+  
+  return (sum(sum.vector)/2)
 }
 
 DistKNN <- function(x, y, dm = "euclid") {
