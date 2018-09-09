@@ -5,3 +5,4 @@ tidyverse: data manipulation and tidying
 DMwR: confusion matrices and useful things for ML
 pROC: ROC calculation and curves for categorical error analysis
 caret: tons of machine learning functions
+Amelia: missmap function for visualisation of missing values
