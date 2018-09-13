@@ -132,7 +132,7 @@ cross.val <- function(ycol, train, folds, ...) {
   require(tidyverse)
   #assert_that(is.integer(k))
   
-  MSEs <- numeric(folds)
+  RMSEs <- numeric(folds)
   
   # create folds
   len <- nrow(train)
@@ -151,12 +151,12 @@ cross.val <- function(ycol, train, folds, ...) {
     preds <- KNN.Predict(test = as.matrix(test.subset), ycol = ycol.train.subset, train = as.matrix(train.subset), ...)
     
     # measure accuracy
-    MSE <- sum((preds - ycol.test.subset)^2)/len
-    MSEs[i] <- MSE
+    RMSE <- sqrt(sum((preds - ycol.test.subset)^2)/len)
+    RMSEs[i] <- RMSE
   }
   
-  outp <- c(mean(MSEs), sd(MSEs))
-  names(outp) <- c("Mean MSE", "SD of MSE")
+  outp <- c(mean(RMSEs), sd(RMSEs))
+  names(outp) <- c("Mean RMSE", "SD of RMSE")
   
   return(outp)
 }
