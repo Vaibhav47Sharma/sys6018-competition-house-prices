@@ -59,8 +59,6 @@ names(missing)
 
 # For now, fit regression model without missing variables
 df.train.test = df.train.test %>% select(-c(names(missing)))
-tibble(df.train.test, stringsAsFactors = TRUE)
-str(data.frame(df.train.test, stringAsFactors = TRUE))
 
 # Taking the character variables and making them factors
 character.variables = sapply(df.train.test, class)
