@@ -68,6 +68,24 @@ Normalize.vector <- function(x, accept.na = TRUE) {
   return(x)
 }
 
+Standardize.vector <- function(x, accept.na = TRUE) {
+  #Function to standardize the vector. Uses a simple formula (x-mean(x)) / sd(x)
+  assertthat::assert_that(is.numeric(x))
+  assertthat::assert_that(length(x)>0)
+  if (!accept.na) {
+    assertthat::assert_that(sum(is.na(x)) == 0)
+  }
+  
+  #Removing all the NA values
+  x <- x[!is.na(x)]
+  mean <- sum(x)/ length(x)
+  sd <- sd(x)
+  
+  #Applying the transformation
+  x <- (x - mean)/ sd
+  return(x)
+}
+
 DistKNN <- function(x, y, dm = "euclid") {
   if (dm == "euclid") {
     return(Dist.euclidean.vector(x, y))
