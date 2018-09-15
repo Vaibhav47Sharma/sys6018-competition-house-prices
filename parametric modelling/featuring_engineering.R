@@ -158,4 +158,11 @@ pg <- expand.grid(k = c(5L, 10L), distweight = c(F), dm = c("euclid"))
 KNN.grid.search(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, grid = pg)
 
 
-
+New.level.transformation <- function(x, threshold) {
+  #Vector x and threshold is threshold
+  
+  interest <- names(which(table(x) < threshold))
+  y <- ifelse(x %in% interest, 'Unknown', test.vector)
+  
+  return(y)
+}
