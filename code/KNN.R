@@ -2,6 +2,7 @@
 
 library(assertthat)
 library(tidyverse)
+library(MASS)
 
 Dist.euclidean.vector <- function(x, y, accept.na = TRUE) {
   #Calculates the euclidean distance between two vectors
@@ -75,6 +76,26 @@ Standardize.vector <- function(x) {
   #Applying the transformation
   x <- (x - mean)/ sd
   return(x)
+}
+
+BoxCox.transformation <- function(x, y) {
+  assertthat::assert_that(sum(is.na(x)) == 0)
+  assertthat::assert_that(is.numeric(x))
+  assertthat::assert_that(length(x)>0)
+  assertthat::assert_that(is.numeric(y))
+  assertthat::assert_that(length(y)>0)
+  
+  #A function which transforms the vector y using boxcox technique and returns the transformed vector
+  box <- boxcox(y ~ x)
+  
+  #Getting the x and y values
+  cox <- data.frame(box$x, box$y)
+  cox_data <- cox[with(cox, order(-cox$box.y)),]
+  lambda = cox_data[1, "box.x"]
+  
+  y <- (y ^ lambda - 1)/lambda   
+
+  return(y)
 }
 
 DistKNN <- function(x, y, dm = "euclid") {
