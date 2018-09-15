@@ -48,18 +48,14 @@ Dist.chi.vector <- function(x, y, accept.na = TRUE) {
   return (sum(sum.vector, na.rm = TRUE)/2)
 }
 
-Normalize.vector <- function(x, accept.na = TRUE) {
+Normalize.vector <- function(x) {
   #Function to normalize the vector. Uses the formula (x-xmin) / (xmax - xmin)
   assertthat::assert_that(is.numeric(x))
   assertthat::assert_that(length(x)>0)
-  if (!accept.na) {
-    assertthat::assert_that(sum(is.na(x)) == 0)
-  }
   
   #Removing all the NA values
-  x <- x[!is.na(x)]
-  x.max <- max(x)
-  x.min <- min(x)
+  x.max <- max(x, na.rm = T)
+  x.min <- min(x, na.rm = T)
   
   #Max - Min, this is the denominator
   x.diff <- x.max - x.min
@@ -68,18 +64,13 @@ Normalize.vector <- function(x, accept.na = TRUE) {
   return(x)
 }
 
-Standardize.vector <- function(x, accept.na = TRUE) {
+Standardize.vector <- function(x) {
   #Function to standardize the vector. Uses a simple formula (x-mean(x)) / sd(x)
   assertthat::assert_that(is.numeric(x))
   assertthat::assert_that(length(x)>0)
-  if (!accept.na) {
-    assertthat::assert_that(sum(is.na(x)) == 0)
-  }
   
-  #Removing all the NA values
-  x <- x[!is.na(x)]
-  mean <- sum(x)/ length(x)
-  sd <- sd(x)
+  mean <- sum(x, na.rm = T)/ sum(!is.na(x))
+  sd <- sd(x, na.rm = T)
   
   #Applying the transformation
   x <- (x - mean)/ sd
@@ -195,7 +186,7 @@ cross.val <- function(ycol, train, folds, ...) {
     preds <- KNN.Predict(test = as.matrix(test.subset), ycol = ycol.train.subset, train = as.matrix(train.subset), ...)
     
     #measure accuracy
-    RMSE <- sqrt(sum((preds - ycol.test.subset)^2)/len)
+    RMSE <- sqrt(sum((log(preds) - log(ycol.test.subset))^2)/len)
     RMSEs[i] <- RMSE
   }
   
@@ -205,7 +196,33 @@ cross.val <- function(ycol, train, folds, ...) {
   return(outp)
 }
   
+KNN.grid.search <- function(ycol, train, folds, grid, repeats=1L, ...) {
+  assert_that(is.data.frame(grid))
+  assert_that(is.integer(repeats))
+  assert_that("k" %in% names(grid))
+  assert_that("distweight" %in% names(grid))
+  assert_that("dm" %in% names(grid))
   
+  outp.rmse <- numeric(nrow(grid))#*repeats)
+  outp.sd <- numeric(nrow(grid))#*repeats)
   
+#  for(j in 1:repeats) {
+    for(i in 1:nrow(grid)) {
+      message("Running grid row ", i)
+      outp <- cross.val(ycol, 
+                        train, 
+                        folds, 
+                        k = grid$k[i], 
+                        distweight = grid$distweight[i], 
+                        dm = grid$dm[i])
+      
+      outp.rmse[i] <- outp[1]
+      outp.sd[i] <- outp[2]
+    }
+#  }
+  
+  outp.df <- rbind(grid, Mean_RMSE = outp.rmse, SD_RMSE = outp.sd)
+  return(outp.df)
+}
   
   

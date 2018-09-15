@@ -2,6 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(magrittr)
 library(Amelia)
+library(onehot)
 
 # Reading in the data
 setwd("../")
@@ -60,10 +61,19 @@ names(missing)
 # For now, fit regression model without missing variables
 df.train.test = df.train.test %>% select(-c(names(missing)))
 
+# Set variables that need to be classed contrary to their default type
+char.vars.tomap <- c("MSSubClass")
+numer.vars.tomap <- c("ExterQual", "ExterCond", "BsmtQual", "BsmtCond", "BsmtExposure", "BsmtFinType1", "BsmtFinType2", "HeatingQC", "KitchenQual", "FireplaceQu", "GarageQual", "GarageCond", "PoolQC")
+
+df.train.test$MSSubClass <- as.factor(df.train.test$MSSubClass)
+
 # Taking the character variables and making them factors
 character.variables = sapply(df.train.test, class)
 character.variables = character.variables[character.variables == 'character']
 df.train.test[, names(character.variables)] = lapply(df.train.test[, names(character.variables)], factor)
+
+
+
 
 # Now that schema and features are consistent, split back into train and test
 
@@ -73,8 +83,79 @@ df.test = df.train.test %>% filter(TrainInd == 0)
 # Dropping Survived and Train Ind from df.test
 df.test = df.test %>% select(-TrainInd, -SalePrice)
 
-# Dropping TrainInd from df.train
+# Dropping TrainInd from df.train and df.test
 df.train = df.train %>% select(-TrainInd)
 df.train$Id = NULL
+
+# Standardization and normalization of numeric variables
+numer.vecs <- which(sapply(df.train.test, is.numeric))
+df.train.transf <- df.train %>% 
+  mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
+  mutate_at(vars(numer.vecs), funs(Normalize.vector))
+
+# Box-Cox transform of numeric variables
+###FIX fill this in later
+
+
+
+# One-hot encoding of the train data
+ohe.obj <- onehot(data = df.train.transf, max_levels = 30)
+df.train.ohe <- predict(object = ohe.obj, data = df.train.transf)
+
+
+# GLMnet regression for feature selection
+
+train.resp <- log(df.train$SalePrice)
+#model.glm <- glmnet(x = m.train, y = train.resp, family = "gaussian")
+#predict(model.glm, newx = m.train)
+#predict(model.glm, type="coef")
+#plot(model.glm, xvar = "lambda")
+
+#cv.obj <- cv.glmnet(x = m.train, y = train.resp, family = "gaussian")
+#plot(predict(cv.obj,newx=m.train, s="lambda.min"))
+
+cvob1a=cv.glmnet(m.train, train.resp, type.measure="mse")
+plot(cvob1a)
+
+coefs <- coef(cvob1a, s = "lambda.min")
+coefs <- data.frame(name = coefs@Dimnames[[1]][coefs@i + 1], coefficient = coefs@x)
+
+# Standardization and normalization of numeric variables in test set
+numer.vecs <- which(sapply(df.test, is.numeric))
+df.test.transf <- df.test %>% 
+  mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
+  mutate_at(vars(numer.vecs), funs(Normalize.vector))
+
+# Transform test set and select most relevant variables
+ohe.obj.test <- onehot(data = df.test.transf, max_levels = 30)
+df.test.ohe <- predict(object = ohe.obj.test, data = df.test.transf)
+
+# More exploration of the classes and thus treatment of each variable
+
+str(df.train)
+
+numer.vecs <- which(sapply(df.train, is.numeric))
+names(numer.vecs) <- colnames(df.train)[numer.vecs]
+numer.vecs
+
+fac.vecs <- which(sapply(df.train, is.factor))
+names(fac.vecs) <- colnames(df.train)[fac.vecs]
+fac.vecs
+
+col.inds <- sort(c(numer.vecs, fac.vecs))
+setdiff(1:ncol(df.train), col.inds)
+
+
+
+
+# parameter tuning
+
+cross.val(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, k = 5L)
+
+param.grid <- expand.grid(k = c(2,3,5,8,13,21,35,56,91), distweight = c(T, F), dm = c("euclid", "chisq"))
+pg <- expand.grid(k = c(5L, 10L), distweight = c(F), dm = c("euclid"))
+
+KNN.grid.search(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, grid = pg)
+
 
 
