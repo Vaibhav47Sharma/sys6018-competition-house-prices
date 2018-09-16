@@ -44,29 +44,32 @@ mean(is.na(df.train.test$FireplaceQu))
 # Deleting FireplaceQu for now
 df.train.test$FireplaceQu = NULL
 
-
 # Finding which variables have missing values
 missing = colMeans(is.na(df.train.test))
 missing = missing[missing!=0] 
 
 # We note that SaleType has a missing value
-# Sale can only have a missing value in the traind ata
-# Delete the sale 
 
 # Checking what these mising values are
 names(missing)
+# [1] "MSZoning"     "LotFrontage"  "Utilities"    "Exterior1st"  "Exterior2nd"  "MasVnrType"   "MasVnrArea"  
+# [8] "BsmtQual"     "BsmtCond"     "BsmtExposure" "BsmtFinType1" "BsmtFinSF1"   "BsmtFinType2" "BsmtFinSF2"  
+# [15] "BsmtUnfSF"    "TotalBsmtSF"  "Electrical"   "BsmtFullBath" "BsmtHalfBath" "KitchenQual"  "Functional"  
+# [22] "GarageType"   "GarageYrBlt"  "GarageFinish" "GarageCars"   "GarageArea"   "GarageQual"   "GarageCond"  
+# [29] "SaleType"   
 # So there are thirty missing variables after deleting the major missing variables
-
-# For now, fit regression model without missing variables
-df.train.test = df.train.test %>% select(-c(names(missing)))
 
 # Taking the character variables and making them factors
 character.variables = sapply(df.train.test, class)
 character.variables = character.variables[character.variables == 'character']
 df.train.test[, names(character.variables)] = lapply(df.train.test[, names(character.variables)], factor)
 
-# Now that schema and features are consistent, split back into train and test
+############################################################################################################
+# Should come back and do imputation here
+# For now, fit regression model without missing variables
+df.train.test = df.train.test %>% select(-c(names(missing)))
 
+# Now that schema and features are consistent, split back into train and test
 df.train = df.train.test %>% filter(TrainInd == 1)
 df.test = df.train.test %>% filter(TrainInd == 0)
 
@@ -77,4 +80,16 @@ df.test = df.test %>% select(-TrainInd, -SalePrice)
 df.train = df.train %>% select(-TrainInd)
 df.train$Id = NULL
 
+# Imputation and class change for factor variables
 
+df.train.test.dummy = df.train.test[, names(character.variables)]
+df.train.test.dummy[is.na(df.train.test.dummy)] = "Unknown"
+df.train.test[, names(character.variables)] = lapply(df.train.test.dummy, factor)
+
+# Imputation and class change for numeric variables
+numeric.vecs = which(sapply(df.train.test, is.numeric))
+df.numeric.imputed = df.train.test %>%
+  transmute_at(vars(numer.vecs), funs(func={ifelse(is.na(.), mean(., na.rm=T), .)}))
+
+df.train.test[, names(numeric.vecs)] = df.numeric.imputed
+table(is.na(df.train.test))
