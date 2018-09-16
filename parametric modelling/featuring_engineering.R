@@ -7,7 +7,7 @@ library(onehot)
 # Reading in the data
 setwd("../")
 df.train = read_csv("data/all/train.csv")
-
+str(df.train)
 # Create artificial train test dataset to make sure that dataset has all factors contained in 
 # test
 #   Read in test dataset
@@ -61,26 +61,30 @@ names(missing)
 # So there are thirty missing variables after deleting the major missing variables
 
 # For now, fit regression model without missing variables
-df.train.test = df.train.test %>% select(-c(names(missing)))
+# df.train.test = df.train.test %>% select(-c(names(missing)))
 
 # Set variables that need to be classed contrary to their default type
 char.vars.tomap <- c("MSSubClass")
 numer.vars.tomap <- c("ExterQual", "ExterCond", "BsmtQual", "BsmtCond", "BsmtExposure", "BsmtFinType1", "BsmtFinType2", "HeatingQC", "KitchenQual", "FireplaceQu", "GarageQual", "GarageCond", "PoolQC")
 
-df.train.test$MSSubClass <- as.factor(df.train.test$MSSubClass)
+df.train.test$MSSubClass <- as.character(df.train.test$MSSubClass)
 
+# Imputation and class change for factor variables
+df.train.test.dummy = df.train.test[, names(character.variables)]
+df.train.test.dummy[is.na(df.train.test.dummy)] = "Unknown"
+df.train.test[, names(character.variables)] = lapply(df.train.test.dummy, factor)
+str(df.train.test)
 
-# Taking the character variables and making them factors
-character.variables = sapply(df.train.test, class)
-character.variables = character.variables[character.variables == 'character']
-df.train.test[, names(character.variables)] = lapply(df.train.test[, names(character.variables)], factor)
+# Imputation for numeric variables
+numeric.variables = which(sapply(df.train.test, is.numeric))
+df.numeric.imputed = df.train.test %>%
+  transmute_at(vars(numeric.variables), funs(func={ifelse(is.na(.), mean(., na.rm=T), .)}))
 
-############################################################################################################
-# Should come back and do imputation here
-# For now, fit regression model without missing variables
-df.train.test = df.train.test %>% select(-c(names(missing)))
+df.train.test[, names(numeric.vecs)] = df.numeric.imputed
 
-# Now that schema and features are consistent, split back into train and test
+# Rechecking if there are any missing values
+missmap(df.train.test)
+# So there are no missing variables
 
 # Now that schema and features are consistent, split back into train and test
 df.train = df.train.test %>% filter(TrainInd == 1)
@@ -92,21 +96,6 @@ df.test = df.test %>% select(-TrainInd, -SalePrice)
 # Dropping TrainInd from df.train and df.test
 df.train = df.train %>% select(-TrainInd)
 df.train$Id = NULL
-
-
-# Imputation and class change for factor variables
-
-df.train.test.dummy = df.train.test[, names(character.variables)]
-df.train.test.dummy[is.na(df.train.test.dummy)] = "Unknown"
-df.train.test[, names(character.variables)] = lapply(df.train.test.dummy, factor)
-
-# Imputation and class change for numeric variables
-numeric.vecs = which(sapply(df.train.test, is.numeric))
-df.numeric.imputed = df.train.test %>%
-  transmute_at(vars(numer.vecs), funs(func={ifelse(is.na(.), mean(., na.rm=T), .)}))
-
-df.train.test[, names(numeric.vecs)] = df.numeric.imputed
-table(is.na(df.train.test))
 
 # Standardization and normalization of numeric variables
 numer.vecs <- which(sapply(df.train.test, is.numeric))
@@ -166,7 +155,7 @@ fac.vecs
 col.inds <- sort(c(numer.vecs, fac.vecs))
 setdiff(1:ncol(df.train), col.inds)
 
-
+  
 
 # parameter tuning
 
