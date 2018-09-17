@@ -17,6 +17,20 @@ Dist.euclidean.vector <- function(x, y, accept.na = TRUE) {
   return (sqrt(sum((x - y) ^ 2, na.rm = TRUE)))
 }
 
+Dist.euclidean.vector.weight <- function(x, y, w, accept.na = TRUE) {
+  #Calculates the euclidean distance between two vectors
+  assertthat::assert_that(is.numeric(x))
+  assertthat::assert_that(is.numeric(y))
+  assertthat::assert_that(length(x)==length(y))
+  assertthat::assert_that(length(y)==length(w))
+  assertthat::assert_that(length(x)>0)
+  if (!accept.na) {
+    assertthat::assert_that(sum(is.na(x)) == 0)
+    assertthat::assert_that(sum(is.na(y)) == 0)
+  }
+  return (sqrt(sum(w * ((x - y) ^ 2), na.rm = TRUE)))
+}
+
 Dist.hamming.vector <- function(x, y, accept.na = TRUE) {
   #Calculates the hamming distance between two vectors
   assertthat::assert_that(is.numeric(x))
@@ -98,11 +112,13 @@ BoxCox.transformation <- function(x, y) {
   return(y)
 }
 
-DistKNN <- function(x, y, dm = "euclid") {
+DistKNN <- function(x, y, dm = "euclid", ...) {
   if (dm == "euclid") {
     return(Dist.euclidean.vector(x, y))
   } else if (dm == "chisq") {
     return(Dist.chi.vector(x, y))
+  } else if (dm == "weighted") {
+    return(Dist.euclidean.vector.weight(x, y, ...))
   } else {
     stop("Distance metric name not recognized")
   }
@@ -128,7 +144,7 @@ FindKNearestNeighbors <- function(x, ycol, train, k, distweight = F, ...) {
   
   #Find distance of each neighbor
   for (i in 1:nrow(train)) {
-    distances[i] <- DistKNN(x, as.numeric(train[i,]))
+    distances[i] <- DistKNN(x, as.numeric(train[i,]), ...)
     response.values[i] <- ycol[i]
   }
   
@@ -242,7 +258,7 @@ KNN.grid.search <- function(ycol, train, folds, grid, repeats=1L, ...) {
     }
 #  }
   
-  outp.df <- rbind(grid, Mean_RMSE = outp.rmse, SD_RMSE = outp.sd)
+  outp.df <- cbind(grid, data.frame(Mean_RMSE = outp.rmse, SD_RMSE = outp.sd, stringsAsFactors = F))
   return(outp.df)
 }
   

@@ -88,7 +88,7 @@ df.train = df.train %>% select(-TrainInd)
 df.train$Id = NULL
 
 # Standardization and normalization of numeric variables
-numer.vecs <- which(sapply(df.train.test, is.numeric))
+numer.vecs <- which(sapply(df.train, is.numeric))
 df.train.transf <- df.train %>% 
   mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
   mutate_at(vars(numer.vecs), funs(Normalize.vector))
@@ -101,7 +101,8 @@ df.train.transf <- df.train %>%
 # One-hot encoding of the train data
 ohe.obj <- onehot(data = df.train.transf, max_levels = 30)
 df.train.ohe <- predict(object = ohe.obj, data = df.train.transf)
-
+#ohe.obj <- onehot(data = df.train, max_levels = 30)
+#df.train.ohe <- predict(object = ohe.obj, data = df.train)
 
 # GLMnet regression for feature selection
 
@@ -126,9 +127,11 @@ df.test.transf <- df.test %>%
   mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
   mutate_at(vars(numer.vecs), funs(Normalize.vector))
 
-# Transform test set and select most relevant variables
+# Transform test set
 ohe.obj.test <- onehot(data = df.test.transf, max_levels = 30)
 df.test.ohe <- predict(object = ohe.obj.test, data = df.test.transf)
+#ohe.obj.test <- onehot(data = df.test, max_levels = 30)
+#df.test.ohe <- predict(object = ohe.obj.test, data = df.test)
 
 # More exploration of the classes and thus treatment of each variable
 
@@ -144,18 +147,4 @@ fac.vecs
 
 col.inds <- sort(c(numer.vecs, fac.vecs))
 setdiff(1:ncol(df.train), col.inds)
-
-
-
-
-# parameter tuning
-
-cross.val(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, k = 5L)
-
-param.grid <- expand.grid(k = c(2,3,5,8,13,21,35,56,91), distweight = c(T, F), dm = c("euclid", "chisq"))
-pg <- expand.grid(k = c(5L, 10L), distweight = c(F), dm = c("euclid"))
-
-KNN.grid.search(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, grid = pg)
-
-
 
