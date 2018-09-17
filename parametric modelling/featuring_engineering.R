@@ -100,6 +100,7 @@ df.train$Id = NULL
 # Standardization and normalization of numeric variables
 numer.vecs <- which(sapply(df.train, is.numeric))
 df.train.transf <- df.train %>% 
+  mutate_at(vars(numer.vecs), funs(BoxCox.transformation(., df.train$SalePrice))) %>%
   mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
   mutate_at(vars(numer.vecs), funs(Normalize.vector))
 
@@ -134,6 +135,7 @@ coefs <- data.frame(name = coefs@Dimnames[[1]][coefs@i + 1], coefficient = coefs
 # Standardization and normalization of numeric variables in test set
 numer.vecs <- which(sapply(df.test, is.numeric))
 df.test.transf <- df.test %>% 
+  mutate_at(vars(numer.vecs), funs(BoxCox.transformation(., df.train$SalePrice))) %>%
   mutate_at(vars(numer.vecs), funs(Standardize.vector)) %>%
   mutate_at(vars(numer.vecs), funs(Normalize.vector))
 

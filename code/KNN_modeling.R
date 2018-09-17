@@ -32,6 +32,9 @@ preds9 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:30]], ycol = df.train$Sa
 preds10 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:15]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:15]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:15]))
 preds11 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:10]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:10]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:10]))
 preds12 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:7]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:7]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:7]))
+preds13 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:12]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:12]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:12]))
+preds14 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:12]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:12]], k=10L, distweight=F, dm = "weighted", w =(13-(1:12)))
+preds15 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:12]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:12]], k=9L, distweight=F, dm = "weighted", w =(imp$Overall[1:12]))
 
 ids <- read_csv("data/all/test.csv")
 ids <- ids$Id
@@ -49,6 +52,9 @@ sol9 <- data.frame(Id = ids, SalePrice = preds9, stringsAsFactors = F)
 sol10 <- data.frame(Id = ids, SalePrice = preds10, stringsAsFactors = F)
 sol11 <- data.frame(Id = ids, SalePrice = preds11, stringsAsFactors = F)
 sol12 <- data.frame(Id = ids, SalePrice = preds12, stringsAsFactors = F)
+sol13 <- data.frame(Id = ids, SalePrice = preds13, stringsAsFactors = F)
+sol14 <- data.frame(Id = ids, SalePrice = preds14, stringsAsFactors = F)
+sol15 <- data.frame(Id = ids, SalePrice = preds15, stringsAsFactors = F)
 
 # Write out submission files
 write_csv(sol1, path= "data/submissions/KNN1.csv")
@@ -63,6 +69,9 @@ write_csv(sol9, path= "data/submissions/KNN9.csv")
 write_csv(sol10, path= "data/submissions/KNN10.csv")
 write_csv(sol11, path= "data/submissions/KNN11.csv")
 write_csv(sol12, path= "data/submissions/KNN12.csv")
+write_csv(sol13, path= "data/submissions/KNN13.csv")
+write_csv(sol14, path= "data/submissions/KNN14.csv")
+write_csv(sol15, path= "data/submissions/KNN15.csv")
 
 
 # try using caret for comparison of R's KNN package to our own implementation
