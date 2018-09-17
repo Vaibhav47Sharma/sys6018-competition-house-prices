@@ -262,4 +262,59 @@ KNN.grid.search <- function(ycol, train, folds, grid, repeats=1L, ...) {
   return(outp.df)
 }
   
+Create.cache <- function(train, test) {
+  #Function to create a cache. It returns indices based on sorted order.
+  cache <- matrix(numeric(nrow(train) * nrow(test)), nrow = nrow(test), ncol = nrow(train))
+  for (i in 1:nrow(test)) {
+    x <- as.numeric(test[i,])
+    cache[i,] <- Get.distance.row(x, train)
+  }
+  
+  return(cache)
+}
+
+Get.distance.row <- function(x, train, distweight = F) {
+  #x is the test vector of length ncol(train)
+  #train is the full matrix of training data
+  #dm is the name of the distance method
+  
+  assert_that(is.matrix(train))
+  assert_that(is.numeric(x))
+  assert_that(length(x) == ncol(train))
+  
+  distances <- numeric(nrow(train))
+  
+  #Find distance of each neighbor
+  for (i in 1:nrow(train)) {
+    distances[i] <- DistKNN(x, as.numeric(train[i,]))
+  }
+  
+  #Sort the indices based on order and return it
+  return(order(distances))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
