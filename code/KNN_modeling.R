@@ -6,8 +6,13 @@
 
 # parameter tuning
 
+library(assertthat)
+library(tidyverse)
+
+# Test crossvalidation for parameter tuning
 cross.val(ycol = df.train$SalePrice, train = as.data.frame(df.train.ohe), folds = 10L, k = 5L)
 
+# test grid search for parameter tuning
 param.grid <- expand.grid(k = c(2L,3L,5L,8L,13L,21L), distweight = c(T, F), dm = c("euclid", "chisq"))
 pg <- expand.grid(k = c(5L, 10L), distweight = c(F), dm = c("euclid"))
 
@@ -25,10 +30,13 @@ preds7 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:10]], ycol = df.train$Sa
 preds8 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:25]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:25]], k=10L, distweight=F, dm = "chisq")
 preds9 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:30]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:30]], k=10L, distweight=F, dm = "chisq")
 preds10 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:15]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:15]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:15]))
+preds11 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:10]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:10]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:10]))
+preds12 <- KNN.Predict(test = df.test.ohe[,imp$varname[1:7]], ycol = df.train$SalePrice, train = df.train.ohe[,imp$varname[1:7]], k=10L, distweight=F, dm = "weighted", w =(imp$Overall[1:7]))
 
 ids <- read_csv("data/all/test.csv")
 ids <- ids$Id
 
+# Prep submission files
 sol1 <- data.frame(Id = ids, SalePrice = preds, stringsAsFactors = F)
 sol2 <- data.frame(Id = ids, SalePrice = preds2, stringsAsFactors = F)
 sol3 <- data.frame(Id = ids, SalePrice = preds3, stringsAsFactors = F)
@@ -39,7 +47,10 @@ sol7 <- data.frame(Id = ids, SalePrice = preds7, stringsAsFactors = F)
 sol8 <- data.frame(Id = ids, SalePrice = preds8, stringsAsFactors = F)
 sol9 <- data.frame(Id = ids, SalePrice = preds9, stringsAsFactors = F)
 sol10 <- data.frame(Id = ids, SalePrice = preds10, stringsAsFactors = F)
+sol11 <- data.frame(Id = ids, SalePrice = preds11, stringsAsFactors = F)
+sol12 <- data.frame(Id = ids, SalePrice = preds12, stringsAsFactors = F)
 
+# Write out submission files
 write_csv(sol1, path= "data/submissions/KNN1.csv")
 write_csv(sol2, path= "data/submissions/KNN2.csv")
 write_csv(sol3, path= "data/submissions/KNN3.csv")
@@ -50,6 +61,8 @@ write_csv(sol7, path= "data/submissions/KNN7.csv")
 write_csv(sol8, path= "data/submissions/KNN8.csv")
 write_csv(sol9, path= "data/submissions/KNN9.csv")
 write_csv(sol10, path= "data/submissions/KNN10.csv")
+write_csv(sol11, path= "data/submissions/KNN11.csv")
+write_csv(sol12, path= "data/submissions/KNN12.csv")
 
 
 # try using caret for comparison of R's KNN package to our own implementation
@@ -96,24 +109,21 @@ model.rf <- train(x = as.data.frame(df.train.ohe)[,-291],
                    #na.action = "na.omit"
 )
 
+# Get best predictors and place in ordered data frame
 imp <- varImp(model.rf$finalModel)
 imp$varname <- rownames(imp)
 imp <- imp %>% arrange(desc(Overall))
 
 
-# create list of data frames of various sizes
-
+# create list of data frames of various sizes for more extensive grid search
 df.train.list <- list()
-#df.test.list <- list()
 trtmp <- as.data.frame(df.train.ohe[,as.character(imp$varname)])
-#tetmp <- as.data.frame(df.test.ohe[,as.character(imp$varname)])
 for (i in 1:5) {
   df.train.list[[i]] <- as.data.frame(df.train.ohe[,1:(i*10)])
-  #df.test.list[[i]] <- df.test.ohe[,1:(i*10)]
 }
 
 
-# Run expandgrid a lot
+# Run expandgrid a lot to do parameter tuning
 outputlist <- list()
 for (i in 1:5) {
   # This returned bad data for some reason - ignore result
@@ -121,7 +131,8 @@ for (i in 1:5) {
 }
 save(outputlist, file="outputlist_gridsearch.RData")
 
-# Run search of parameter space using likely values
+# Run search of parameter space using likely values since above grid search has bug apparently,
+# when run with the multiple sets of predictor data frames
 cross.val(ycol = df.train$SalePrice, train = df.train.list[[1]], folds = 10L, k = 10L) #0.1121
 cross.val(ycol = df.train$SalePrice, train = df.train.list[[2]], folds = 10L, k = 10L) #0.1042
 cross.val(ycol = df.train$SalePrice, train = df.train.list[[3]], folds = 10L, k = 10L) #0.0966 *
